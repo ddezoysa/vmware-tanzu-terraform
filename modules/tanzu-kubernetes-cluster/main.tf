@@ -1,46 +1,25 @@
+
+
 resource "kubernetes_manifest" "cluster" {
   provider = kubernetes-alpha
 
-  manifest = {
-    "apiVersion" : "run.tanzu.vmware.com/v1alpha1",
-    "kind" : "TanzuKubernetesCluster",
-    "metadata" : {
-      "name" : var.name,
-      "namespace" : var.namespace
-    },
-    "spec" : {
-      "distribution" : {
-        "version" : var.k8sVersion
-      },
-      "topology" : {
-        "controlPlane" : {
-          "count" : var.controlPlaneVMCount,
-          "class" : var.controlPlaneVMClass,
-          "storageClass" : var.controlPlaneStorageClass
-        },
-        "workers" : {
-          "count" : var.workerVMCount,
-          "class" : var.workerVMClass,
-          "storageClass" : var.workerStorageClass
-        }
-      },
-      "settings" : {
-        "network" : {
-          "cni" : {
-            "name" : var.cni
-          },
-          "services" : {
-            "cidrBlocks" : jsonencode(var.servicesCIDR)
-          },
-          "pods" : {
-            "cidrBlocks" : jsonencode(var.podsCIDR)
-          }
-        },
-        "storage" : {
-          "classes" : jsonencode(var.storageClasses),
-          "defaultClass" : var.defaultStorageClass
-        }
-      }
-    }
-  }
+  manifest = yamldecode(templatefile("${path.module}/template.yaml", {
+    NAME = var.name
+    NAMESPACE = var.namespace
+    K8S_VERSION = var.k8sVersion
+
+    CP_COUNT = var.controlPlaneVMCount
+    CP_VM_CLASS = var.controlPlaneVMClass
+    CP_STORAGE_CLASS = var.controlPlaneStorageClass
+
+    W_COUNT = var.workerVMCount
+    W_VM_CLASS = var.workerVMClass
+    W_STORAGE_CLASS = var.workerStorageClass
+
+    CNI = var.cni
+    SERVICE_CIDR = jsonencode(var.servicesCIDR)
+    POD_CIDR = jsonencode(var.podsCIDR)
+    STORAGE_CLASSES = jsonencode(var.storageClasses)
+    DEFAULT_STORAGE_CLASS = var.defaultStorageClass
+  }))
 }
